@@ -3,6 +3,7 @@ export interface AxiosAuthRefreshOptions {
     statusCodes?: Array<number>;
     retryInstance?: AxiosInstance;
     interceptNetworkError?: boolean;
+    shouldInterceptResponse?: Function;
     pauseInstanceWhileRefreshing?: boolean;
     onRetry?: (requestConfig: AxiosRequestConfig) => AxiosRequestConfig;
     /**

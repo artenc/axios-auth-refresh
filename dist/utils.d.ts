@@ -1,4 +1,4 @@
-import { AxiosInstance, AxiosPromise } from 'axios';
+import { AxiosInstance, AxiosPromise, AxiosResponse } from 'axios';
 import { AxiosAuthRefreshOptions, AxiosAuthRefreshCache } from './model';
 export declare const defaultOptions: AxiosAuthRefreshOptions;
 /**
@@ -14,6 +14,13 @@ export declare function mergeOptions(defaults: AxiosAuthRefreshOptions, options:
  * @return {boolean}
  */
 export declare function shouldInterceptError(error: any, options: AxiosAuthRefreshOptions, instance: AxiosInstance, cache: AxiosAuthRefreshCache): boolean;
+/**
+ * Returns TRUE: when shouldInterceptResponse option is set and its result is true
+ * Returns FALSE: when shouldInterceptResponse option not set or its result is falsy
+ *
+ * @return {boolean}
+ */
+export declare function shouldInterceptResponse(response: AxiosResponse, options: AxiosAuthRefreshOptions, instance: AxiosInstance, cache: AxiosAuthRefreshCache): boolean;
 /**
  * Creates refresh call if it does not exist or returns the existing one.
  *
@@ -47,4 +54,4 @@ export declare function getRetryInstance(instance: AxiosInstance, options: Axios
  * @param {AxiosInstance} instance
  * @return AxiosPromise
  */
-export declare function resendFailedRequest(error: any, instance: AxiosInstance): AxiosPromise;
+export declare function resendFailedRequest(config: any, response: AxiosResponse, instance: AxiosInstance): AxiosPromise;
