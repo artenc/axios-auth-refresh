@@ -8,6 +8,7 @@ import {
     createRefreshCall,
     resendFailedRequest,
     shouldInterceptError,
+    shouldInterceptResponse,
     createRequestQueueInterceptor,
 } from './utils';
 
@@ -44,20 +45,15 @@ export default function createAuthRefreshInterceptor(
         requestQueueInterceptorId: undefined,
     };
 
-    return instance.interceptors.response.use((response: AxiosResponse) => response, (error: any) => {
+    options = mergeOptions(defaultOptions, options);
 
-        options = mergeOptions(defaultOptions, options);
-
-        if (!shouldInterceptError(error, options, instance, cache)) {
-            return Promise.reject(error);
-        }
-
+    const intercepted = (response, config) => {
         if (options.pauseInstanceWhileRefreshing) {
             cache.skipInstances.push(instance);
         }
 
         // If refresh call does not exist, create one
-        const refreshing = createRefreshCall(error, refreshAuthCall, cache);
+        const refreshing = createRefreshCall(response, refreshAuthCall, cache);
 
         // Create interceptor that will bind all the others requests until refreshAuthCall is resolved
         createRequestQueueInterceptor(instance, cache, options);
@@ -65,6 +61,23 @@ export default function createAuthRefreshInterceptor(
         return refreshing
             .finally(() => unsetCache(instance, cache))
             .catch(error => Promise.reject(error))
-            .then(() => resendFailedRequest(error, getRetryInstance(instance, options)));
-    });
+            .then(() => resendFailedRequest(response.config, response, getRetryInstance(instance, options)));
+    }
+
+    return instance.interceptors.response.use(
+        (response: AxiosResponse) => {
+            if (!shouldInterceptResponse(response, options, instance, cache)) {
+                return response;
+            }
+
+            return intercepted(response, response.config);
+        },
+        (error: any) => {
+            if (!shouldInterceptError(error, options, instance, cache)) {
+                return Promise.reject(error);
+            }
+            
+            return intercepted(error.response, error.config);
+        }
+    );
 }

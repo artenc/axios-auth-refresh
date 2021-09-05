@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosPromise } from 'axios';
+import axios, { AxiosInstance, AxiosPromise, AxiosResponse } from 'axios';
 import { AxiosAuthRefreshOptions, AxiosAuthRefreshCache } from './model';
 
 export const defaultOptions: AxiosAuthRefreshOptions = {
@@ -54,6 +54,25 @@ export function shouldInterceptError(
     error.response = {
       config: error.config,
     };
+  }
+
+  return !options.pauseInstanceWhileRefreshing || !cache.skipInstances.includes(instance);
+}
+
+/**
+ * Returns TRUE: when shouldInterceptResponse option is set and its result is true
+ * Returns FALSE: when shouldInterceptResponse option not set or its result is falsy
+ *
+ * @return {boolean}
+ */
+export function shouldInterceptResponse(
+    response: AxiosResponse,
+    options: AxiosAuthRefreshOptions,
+    instance: AxiosInstance,
+    cache: AxiosAuthRefreshCache,
+): boolean {
+  if (!options.shouldInterceptResponse || !options.shouldInterceptResponse(response)) {
+    return false
   }
 
   return !options.pauseInstanceWhileRefreshing || !cache.skipInstances.includes(instance);
@@ -135,9 +154,10 @@ export function getRetryInstance(instance: AxiosInstance, options: AxiosAuthRefr
  * @return AxiosPromise
  */
 export function resendFailedRequest(
-    error: any,
+    config: any,
+    response: AxiosResponse,
     instance: AxiosInstance
 ): AxiosPromise {
-  error.config.skipAuthRefresh = true;
-  return instance(error.response.config);
+  config.skipAuthRefresh = true;
+  return instance(response.config);
 }
